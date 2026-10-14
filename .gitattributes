@@ -1,0 +1,11 @@
+# Store LF in the repository and check LF out everywhere, so the same commit
+# produces the same working tree on Windows, macOS and Linux. Without this,
+# core.autocrlf rewrites the working copy and every git command warns about it.
+* text=auto eol=lf
+
+# Binary assets: never touch their bytes.
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
+*.xlsx binary

@@ -357,16 +357,7 @@ outer one.
 ## Project layout
 
 ```
-package.json            Electron manifest (main + scripts + electron dep)
-electron/
-  main.js               window, chrome, dialogs, menu, --smoke / --probe
-  preload.js            the contextBridge API
-  python-bridge.js      engine process + request correlation
-  renderer/
-    index.html          interface markup
-    app.js              state, control wiring, bridge calls
-    styles/apple.css    design tokens and components
-easyfig/
+easyfig/                the Python package: engine, CLI, bridge and Tk fallback
   bridge.py             the JSON protocol
   chart_builder.py      settings + headless rendering
   chart_manager.py      matplotlib drawing, broken axes
@@ -374,11 +365,30 @@ easyfig/
   data_processor.py     parsing, statistics, fitting, table loading
   palettes.py           colour helpers + the ten palettes
   fonts.py              CJK font configuration
-  cli.py, gui.py, application.py, custom_color_dialog.py, config.py
+  cli.py                `easyfig` command line interface
+  gui.py, application.py, custom_color_dialog.py, config.py
+electron/               the desktop application
+  main.js               window, chrome, dialogs, menu, --smoke / --probe
+  preload.js            the contextBridge API
+  python-bridge.js      engine process + request correlation
+  renderer/
+    index.html          interface markup
+    app.js              state, control wiring, bridge calls
+    styles/apple.css    design tokens and components
+tests/test_easyfig.py   unit, regression and integration tests
+docs/                   screenshots used by this README
+examples/               runnable walkthrough: data generator + commands
+  make_demo_data.py     writes examples/output/data/*.csv
+  output/               generated data and figures (ignored by git)
 main.py                 `python main.py` dispatcher (GUI or CLI)
 cli.py                  `python cli.py` launcher for an uninstalled checkout
-tests/test_easyfig.py   unit, regression and integration tests
+pyproject.toml          Python packaging and the console scripts
+package.json            Electron manifest (main + scripts + electron dep)
 ```
+
+Generated files are never committed: `node_modules/`, `.conda-env/`,
+`electron/.smoke/` and `examples/output/` are all ignored, so the repository holds
+source and documentation only.
 
 ## Development
 

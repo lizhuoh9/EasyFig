@@ -8,9 +8,11 @@ multi-file series with repeats for mean +- SD / SEM.
 
 Run it from the repository root::
 
-    python charts/make_demo_data.py
+    python examples/make_demo_data.py
 
-Then see charts/README.md for the commands that turn it into figures.
+It writes ``examples/output/data/*.csv``. That folder is generated, so git
+ignores it. See examples/README.md for the commands that turn the data into
+figures.
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ import os
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "data")
+DATA = os.path.join(HERE, "output", "data")
 
 SIZES = [1, 2, 3, 4, 5, 6, 7, 8]
 
@@ -51,7 +53,7 @@ def main():
     os.makedirs(DATA, exist_ok=True)
     rng = np.random.default_rng(20240607)
 
-    print("writing demo data to charts/data")
+    print("writing demo data to examples/output/data")
 
     # 1. Linear response, one measurement per size -> linear regression.
     x = np.array(SIZES, dtype=float)
