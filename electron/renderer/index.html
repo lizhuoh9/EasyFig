@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+  <title>EasyFig</title>
+  <link rel="stylesheet" href="styles/apple.css">
+</head>
+<body class="booting">
+
+  <!-- ── Title bar ─────────────────────────────────────────────────────── -->
+  <header class="titlebar">
+    <div class="titlebar__lead">
+      <span class="app-mark" aria-hidden="true">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <rect x="1" y="10" width="3.4" height="8" rx="1.1"/>
+          <rect x="6.2" y="6" width="3.4" height="12" rx="1.1"/>
+          <rect x="11.4" y="2.5" width="3.4" height="15.5" rx="1.1"/>
+          <circle cx="17.6" cy="4.6" r="1.7"/>
+        </svg>
+      </span>
+      <h1 class="titlebar__title">EasyFig</h1>
+      <span class="titlebar__subtitle" id="documentSubtitle">未命名图表</span>
+    </div>
+
+    <div class="titlebar__trail">
+      <div class="segmented segmented--compact" id="modeSegment" role="radiogroup"
+           aria-label="布局模式">
+        <button type="button" data-mode="single" role="radio">单图</button>
+        <button type="button" data-mode="compose" role="radio">拼图</button>
+      </div>
+      <div class="segmented segmented--compact" id="presetSegment"
+           data-setting="visual_preset" role="radiogroup" aria-label="视觉预设">
+        <button type="button" data-value="default" role="radio">默认</button>
+        <button type="button" data-value="sci" role="radio">SCI</button>
+      </div>
+      <button type="button" class="icon-button" id="themeButton" title="外观" aria-label="外观">
+        <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+          <path d="M10 2.2a7.8 7.8 0 1 0 0 15.6 7.8 7.8 0 0 0 0-15.6Zm0 1.6v12.4a6.2 6.2 0 0 1 0-12.4Z"/>
+        </svg>
+      </button>
+      <button type="button" class="button button--primary" id="exportButton">
+        导出图表
+      </button>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <section class="panel">
+        <header class="panel__header">
+          <h2 class="panel__title">数据集</h2>
+          <span class="badge" id="datasetCount">0</span>
+        </header>
+
+        <ul class="source-list" id="datasetList" role="listbox" aria-label="数据集"></ul>
+
+        <div class="panel__actions">
+          <button type="button" class="icon-button icon-button--bordered" id="addDatasetButton"
+                  title="添加数据集" aria-label="添加数据集">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </button>
+          <button type="button" class="icon-button icon-button--bordered" id="editDatasetButton"
+                  title="编辑数据集" aria-label="编辑数据集">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M13.2 3.6 16.4 6.8 7.6 15.6 4 16.4l.8-3.6z" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button type="button" class="icon-button icon-button--bordered" id="removeDatasetButton"
+                  title="移除数据集" aria-label="移除数据集">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M5 10h10" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </button>
+          <span class="spacer"></span>
+          <button type="button" class="icon-button icon-button--bordered" id="clearDatasetsButton"
+                  title="全部清空" aria-label="全部清空">
+            <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+              <path d="M5.5 6.5h9M8 6.5V5h4v1.5M7 8.5v6M10 8.5v6M13 8.5v6"
+                    fill="none" stroke="currentColor" stroke-width="1.4"
+                    stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="panel__stack">
+          <button type="button" class="button button--wide" id="importTableButton">
+            导入表格…
+          </button>
+          <button type="button" class="button button--wide" id="importMultilineButton">
+            导入多线图…
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="panel__header">
+          <h2 class="panel__title">科研配色</h2>
+          <span class="badge" id="paletteCount">10</span>
+        </header>
+        <p class="panel__hint">点击配色即可套用到全部数据集，或点色块取单色。</p>
+        <div class="palette-stack" id="paletteStack"></div>
+        <button type="button" class="button button--wide" id="applyPaletteButton">
+          套用到全部数据集
+        </button>
+      </section>
+    </aside>
+
+    <!-- ── Stage ───────────────────────────────────────────────────────── -->
+    <main class="stage">
+      <div class="stage__toolbar">
+        <div class="stage__title">
+          <span class="stage__title-text" id="stageTitle">预览</span>
+          <span class="stage__meta" id="previewMeta">—</span>
+        </div>
+        <div class="stage__tools">
+          <div class="segmented segmented--compact" id="zoomSegment" role="radiogroup"
+               aria-label="缩放">
+            <button type="button" data-zoom="fit" role="radio">适合窗口</button>
+            <button type="button" data-zoom="actual" role="radio">实际大小</button>
+          </div>
+          <button type="button" class="button" id="refreshButton">刷新</button>
+        </div>
+      </div>
+
+      <div class="canvas-area" id="canvasArea">
+        <div class="canvas-frame" id="canvasFrame">
+          <img id="previewImage" alt="图表预览" draggable="false">
+        </div>
+        <div class="canvas-empty" id="canvasEmpty">
+          <div class="canvas-empty__icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="46" height="46">
+              <rect x="8" y="26" width="7" height="14" rx="2.4"/>
+              <rect x="20.5" y="16" width="7" height="24" rx="2.4"/>
+              <rect x="33" y="9" width="7" height="31" rx="2.4"/>
+            </svg>
+          </div>
+          <p class="canvas-empty__title">还没有数据</p>
+          <p class="canvas-empty__hint">导入一个表格，或手动添加数据集开始绘制。</p>
+        </div>
+      </div>
+
+      <section class="stats" id="statsPanel">
+        <header class="stats__header" id="statsToggle" role="button" tabindex="0"
+                aria-expanded="true">
+          <span class="disclosure" aria-hidden="true"></span>
+          <h2 class="stats__title">统计信息</h2>
+          <span class="badge" id="statsCount">0</span>
+        </header>
+        <div class="stats__body" id="statsBody">
+          <div class="stats__scroll">
+            <table class="data-table" id="statsTable">
+              <thead>
+                <tr>
+                  <th scope="col">数据集</th>
+                  <th scope="col">X</th>
+                  <th scope="col">均值</th>
+                  <th scope="col">标准差</th>
+                  <th scope="col">最大</th>
+                  <th scope="col">最小</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Inspector ───────────────────────────────────────────────────── -->
+    <aside class="inspector" id="inspector">
+      <div class="inspector__scroll">
+
+        <!-- Chart -->
+        <section class="group" data-open="true">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">图表</span>
+          </button>
+          <div class="group__body">
+            <div class="row" data-mode="single">
+              <label class="row__label" for="ctlTitle">标题</label>
+              <div class="row__control">
+                <input type="text" class="textfield" id="ctlTitle" data-setting="title"
+                       placeholder="Thrust Analysis">
+              </div>
+            </div>
+            <div class="row row--pair">
+              <div class="row__pair">
+                <label class="row__label" for="ctlXLabel">X 轴</label>
+                <input type="text" class="textfield" id="ctlXLabel" data-setting="xlabel">
+              </div>
+              <select class="popup popup--unit" id="ctlXUnit" data-setting="x_unit"
+                      aria-label="X 轴单位"></select>
+            </div>
+            <div class="row row--pair">
+              <div class="row__pair">
+                <label class="row__label" for="ctlYLabel">Y 轴</label>
+                <input type="text" class="textfield" id="ctlYLabel" data-setting="ylabel">
+              </div>
+              <select class="popup popup--unit" id="ctlYUnit" data-setting="y_unit"
+                      aria-label="Y 轴单位"></select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Graph -->
+        <section class="group" data-open="true">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">图形</span>
+          </button>
+          <div class="group__body">
+            <div class="row row--stack">
+              <span class="row__label">类型</span>
+              <div class="segmented segmented--grid" id="chartTypeSegment"
+                   data-setting="chart_type" role="radiogroup" aria-label="图表类型">
+                <button type="button" data-value="line">折线</button>
+                <button type="button" data-value="scatter">散点</button>
+                <button type="button" data-value="line_scatter">折线+散点</button>
+                <button type="button" data-value="errorbar">误差条</button>
+                <button type="button" data-value="bar">柱状</button>
+                <button type="button" data-value="pie">饼图</button>
+              </div>
+            </div>
+            <div class="row row--stack">
+              <span class="row__label">X 轴</span>
+              <div class="segmented" id="xaxisModeSegment" data-setting="xaxis_mode"
+                   role="radiogroup" aria-label="X 轴模式">
+                <button type="button" data-value="categorical">分类</button>
+                <button type="button" data-value="numeric">数值</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Series -->
+        <section class="group" data-open="true">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">系列显示</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">均值点</span>
+              <button type="button" class="switch" data-setting="show_mean"
+                      role="switch" aria-label="均值点"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">连接线</span>
+              <button type="button" class="switch" data-setting="show_connecting_line"
+                      role="switch" aria-label="连接线"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">最大值</span>
+              <button type="button" class="switch" data-setting="show_max"
+                      role="switch" aria-label="最大值"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">最小值</span>
+              <button type="button" class="switch" data-setting="show_min"
+                      role="switch" aria-label="最小值"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">数据标签</span>
+              <button type="button" class="switch" data-setting="show_data_labels"
+                      role="switch" aria-label="数据标签"></button>
+            </div>
+            <div class="row" data-when-setting="show_data_labels">
+              <span class="row__label">标签内容</span>
+              <div class="segmented segmented--compact" data-setting="label_content"
+                   role="radiogroup" aria-label="标签内容">
+                <button type="button" data-value="y">仅 Y</button>
+                <button type="button" data-value="xy">X + Y</button>
+              </div>
+            </div>
+            <div class="row" data-when-setting="show_data_labels">
+              <span class="row__label">标签字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="label_font_size"
+                       min="6" max="24" step="1" aria-label="标签字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">点透明度</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="point_alpha"
+                       min="0" max="1" step="0.05" aria-label="点透明度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Colour & stroke -->
+        <section class="group" data-open="true">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">颜色与线条</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">线条颜色</span>
+              <button type="button" class="well" data-color-setting="line_color"
+                      aria-label="线条颜色"></button>
+            </div>
+            <div class="row" data-when="line">
+              <span class="row__label">线条宽度</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="line_width"
+                       min="0.5" max="8" step="0.1" aria-label="线条宽度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when="line">
+              <span class="row__label">线型</span>
+              <div class="segmented segmented--compact" data-setting="line_style"
+                   role="radiogroup" aria-label="线型">
+                <button type="button" data-value="solid">实线</button>
+                <button type="button" data-value="dashed">虚线</button>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">标记大小</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="marker_size"
+                       min="2" max="30" step="1" aria-label="标记大小">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when="errorbar bar">
+              <span class="row__label">误差条颜色</span>
+              <button type="button" class="well" data-color-setting="errorbar_color"
+                      aria-label="误差条颜色"></button>
+            </div>
+            <div class="row" data-when="bar">
+              <span class="row__label">柱体颜色</span>
+              <button type="button" class="well" data-color-setting="bar_color"
+                      aria-label="柱体颜色"></button>
+            </div>
+            <div class="row" data-when="bar">
+              <span class="row__label">柱体样式</span>
+              <select class="popup" data-setting="bar_style" aria-label="柱体样式"></select>
+            </div>
+            <div class="row" data-when="bar">
+              <span class="row__label">柱体边宽</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="bar_edge_width"
+                       min="0" max="6" step="0.25" aria-label="柱体边宽">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when="line line_scatter scatter">
+              <span class="row__label">折线误差条</span>
+              <button type="button" class="switch" data-setting="show_error_bars_line"
+                      role="switch" aria-label="折线误差条"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Error bars -->
+        <section class="group" data-when-section="errorbar bar">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">误差条</span>
+          </button>
+          <div class="group__body">
+            <div class="row row--stack">
+              <span class="row__label">模式</span>
+              <div class="segmented" data-setting="errorbar_mode" role="radiogroup"
+                   aria-label="误差条模式">
+                <button type="button" data-value="summary">汇总</button>
+                <button type="button" data-value="per_size">逐尺寸</button>
+              </div>
+            </div>
+            <div class="row row--stack">
+              <span class="row__label">指标</span>
+              <div class="segmented segmented--compact" data-setting="errorbar_metric"
+                   role="radiogroup" aria-label="误差指标">
+                <button type="button" data-value="SD">标准差</button>
+                <button type="button" data-value="SEM">标准误</button>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">帽宽</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="errorbar_capsize"
+                       min="0" max="16" step="1" aria-label="帽宽">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">线宽</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="errorbar_linewidth"
+                       min="0.5" max="5" step="0.1" aria-label="误差条线宽">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">均值点</span>
+              <button type="button" class="switch" data-setting="errorbar_show_mean"
+                      role="switch" aria-label="均值点"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">误差条</span>
+              <button type="button" class="switch" data-setting="errorbar_show_error"
+                      role="switch" aria-label="误差条"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">最大值</span>
+              <button type="button" class="switch" data-setting="errorbar_show_max"
+                      role="switch" aria-label="最大值"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">最小值</span>
+              <button type="button" class="switch" data-setting="errorbar_show_min"
+                      role="switch" aria-label="最小值"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Legend -->
+        <section class="group" data-when-section="!pie">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">图例</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">显示图例</span>
+              <button type="button" class="switch" data-setting="show_legend"
+                      role="switch" aria-label="显示图例"></button>
+            </div>
+            <div class="row" data-when-setting="show_legend">
+              <span class="row__label">位置</span>
+              <select class="popup" data-setting="legend_loc" aria-label="图例位置"></select>
+            </div>
+            <div class="row" data-when-setting="show_legend">
+              <span class="row__label">列数</span>
+              <input type="number" class="stepper" data-setting="legend_ncol"
+                     min="1" max="8" step="1" aria-label="图例列数">
+            </div>
+            <div class="row" data-when-setting="show_legend">
+              <span class="row__label">字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="legend_font_size"
+                       min="6" max="28" step="1" aria-label="图例字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-setting="show_legend">
+              <span class="row__label">标记大小</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="legend_marker_size"
+                       min="2" max="24" step="1" aria-label="图例标记大小">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Processing -->
+        <section class="group" data-when-section="!pie">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">数据处理</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">方法</span>
+              <select class="popup" id="fitMethod" aria-label="处理方法"></select>
+            </div>
+            <div class="row" data-when-fit="polynomial">
+              <span class="row__label">多项式阶数</span>
+              <input type="number" class="stepper" id="fitDegree" min="1" max="10" step="1"
+                     aria-label="多项式阶数">
+            </div>
+            <div class="row" data-when-fit="linear polynomial">
+              <span class="row__label">显示原始点</span>
+              <button type="button" class="switch" id="fitShowRaw" role="switch"
+                      aria-label="显示原始点"></button>
+            </div>
+            <div class="row" data-when-fit="linear polynomial mean_error">
+              <span class="row__label">显示拟合结果</span>
+              <button type="button" class="switch" id="fitShowFit" role="switch"
+                      aria-label="显示拟合结果"></button>
+            </div>
+            <div class="row" data-when-fit="linear polynomial">
+              <span class="row__label">横向抖动</span>
+              <button type="button" class="switch" id="fitJitter" role="switch"
+                      aria-label="横向抖动"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Axes -->
+        <section class="group" data-when-section="!pie">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">坐标轴与刻度</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">X 刻度数</span>
+              <input type="number" class="stepper" data-setting="x_tick_count"
+                     min="2" max="20" step="1" aria-label="X 刻度数">
+            </div>
+            <div class="row">
+              <span class="row__label">Y 刻度数</span>
+              <input type="number" class="stepper" data-setting="y_tick_count"
+                     min="2" max="20" step="1" aria-label="Y 刻度数">
+            </div>
+            <div class="row">
+              <span class="row__label">自动 X 刻度</span>
+              <button type="button" class="switch" data-setting="auto_x_ticks"
+                      role="switch" aria-label="自动 X 刻度"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">自动 Y 刻度</span>
+              <button type="button" class="switch" data-setting="auto_y_ticks"
+                      role="switch" aria-label="自动 Y 刻度"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">从零开始</span>
+              <button type="button" class="switch" data-setting="force_origin_zero"
+                      role="switch" aria-label="从零开始"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">次刻度</span>
+              <button type="button" class="switch" data-setting="show_minor_ticks"
+                      role="switch" aria-label="次刻度"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">反转 Y 轴</span>
+              <button type="button" class="switch" data-setting="reverse_y_axis"
+                      role="switch" aria-label="反转 Y 轴"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">刻度字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="tick_label_size"
+                       min="6" max="24" step="1" aria-label="刻度字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">刻度加粗</span>
+              <button type="button" class="switch" data-setting="tick_label_bold"
+                      role="switch" aria-label="刻度加粗"></button>
+            </div>
+            <div class="row">
+              <span class="row__label">X 标签角度</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="x_tick_rotation"
+                       min="-90" max="90" step="15" aria-label="X 标签角度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">刻度长度</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="tick_length"
+                       min="0" max="12" step="0.5" aria-label="刻度长度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">轴标签字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="axis_label_font_size"
+                       min="8" max="24" step="1" aria-label="轴标签字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">标题字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="title_font_size"
+                       min="8" max="32" step="1" aria-label="标题字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Broken axis -->
+        <section class="group" data-when-section="!pie" data-mode="single">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">断轴</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">断开 Y 轴</span>
+              <button type="button" class="switch" data-setting="use_broken_y_axis"
+                      role="switch" aria-label="断开 Y 轴"></button>
+            </div>
+            <div class="row row--quad" data-when-setting="use_broken_y_axis">
+              <span class="row__label">下段 上限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_y_bot_max"
+                     step="any" aria-label="Y 断轴下段上限">
+              <span class="row__label">上段 下限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_y_top_min"
+                     step="any" aria-label="Y 断轴上段下限">
+            </div>
+            <div class="row row--quad" data-when-setting="use_broken_y_axis">
+              <span class="row__label">下段 下限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_y_bot_min"
+                     step="any" aria-label="Y 断轴下段下限">
+              <span class="row__label">上段 上限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_y_top_max"
+                     step="any" aria-label="Y 断轴上段上限">
+            </div>
+            <div class="row">
+              <span class="row__label">断开 X 轴</span>
+              <button type="button" class="switch" data-setting="use_broken_x_axis"
+                      role="switch" aria-label="断开 X 轴"></button>
+            </div>
+            <div class="row row--quad" data-when-setting="use_broken_x_axis">
+              <span class="row__label">左段 上限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_x_left_max"
+                     step="any" aria-label="X 断轴左段上限">
+              <span class="row__label">右段 下限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_x_right_min"
+                     step="any" aria-label="X 断轴右段下限">
+            </div>
+            <div class="row row--quad" data-when-setting="use_broken_x_axis">
+              <span class="row__label">左段 下限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_x_left_min"
+                     step="any" aria-label="X 断轴左段下限">
+              <span class="row__label">右段 上限</span>
+              <input type="number" class="stepper stepper--wide" data-setting="broken_x_right_max"
+                     step="any" aria-label="X 断轴右段上限">
+            </div>
+          </div>
+        </section>
+
+        <!-- Export (single chart) -->
+        <section class="group" data-open="true" data-mode="single">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">导出</span>
+          </button>
+          <div class="group__body">
+            <div class="row row--stack">
+              <span class="row__label">尺寸模式</span>
+              <div class="segmented" data-setting="export_mode" role="radiogroup"
+                   aria-label="尺寸模式">
+                <button type="button" data-value="match_preview">跟随预览</button>
+                <button type="button" data-value="custom_size">自定义</button>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">DPI</span>
+              <input type="number" class="stepper" data-setting="export_dpi"
+                     min="72" max="1200" step="10" aria-label="DPI">
+            </div>
+            <div class="row">
+              <span class="row__label">宽度 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="fig_width"
+                       min="2" max="20" step="0.5" aria-label="宽度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">高度 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-setting="fig_height"
+                       min="2" max="20" step="0.5" aria-label="高度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">自动裁剪留白</span>
+              <button type="button" class="switch" data-setting="export_tight_bbox"
+                      role="switch" aria-label="自动裁剪留白"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Composition (拼图) ───────────────────────────────────────── -->
+
+        <!-- Layout -->
+        <section class="group" data-open="true" data-mode="compose">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">排版</span>
+          </button>
+          <div class="group__body">
+            <div class="row row--stack">
+              <span class="row__label">布局预设</span>
+              <select class="popup" id="composePreset" aria-label="布局预设"></select>
+            </div>
+            <pre class="layout-diagram" id="layoutDiagram">导入数据后这里会显示当前排版</pre>
+            <div class="row row--stack">
+              <span class="row__label">布局方式</span>
+              <div class="segmented segmented--compact" data-compose="layout_mode"
+                   role="radiogroup" aria-label="布局方式">
+                <button type="button" data-value="auto">自动</button>
+                <button type="button" data-value="manual">手动行列</button>
+              </div>
+            </div>
+            <div class="row row--pair" data-when-compose="layout_mode=manual">
+              <div class="row__pair">
+                <label class="row__label" for="composeRows">行数</label>
+                <input type="number" class="stepper" id="composeRows" min="1" max="12"
+                       step="1" aria-label="行数">
+              </div>
+              <div class="row__pair">
+                <label class="row__label" for="composeCols">列数</label>
+                <input type="number" class="stepper" id="composeCols" min="1" max="12"
+                       step="1" aria-label="列数">
+              </div>
+            </div>
+            <div class="row row--stack" data-when-compose="layout_mode=manual">
+              <span class="row__label">每行高度比</span>
+              <input type="text" class="textfield" id="composeRowHeights"
+                     placeholder="例：1.4, 1">
+            </div>
+            <div class="row row--stack" data-when-compose="layout_mode=manual">
+              <span class="row__label">每列宽度比</span>
+              <input type="text" class="textfield" id="composeColWidths"
+                     placeholder="例：2, 1">
+            </div>
+            <div class="row">
+              <span class="row__label">列间距</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" id="composeGapX" min="0" max="1.5"
+                       step="0.02" aria-label="列间距">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">行间距</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" id="composeGapY" min="0" max="1.5"
+                       step="0.02" aria-label="行间距">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <p class="row__hint">间距是最小值，字号变大时引擎会自动留出足够空间。</p>
+          </div>
+        </section>
+
+        <!-- Panel markers -->
+        <section class="group" data-open="true" data-mode="compose">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">面板标记</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">显示标记</span>
+              <button type="button" class="switch" data-compose="label_show"
+                      role="switch" aria-label="显示标记"></button>
+            </div>
+            <div class="row row--stack">
+              <span class="row__label">样式</span>
+              <div class="segmented segmented--grid" data-compose="label_style"
+                   role="radiogroup" aria-label="标记样式">
+                <button type="button" data-value="abc">a b c</button>
+                <button type="button" data-value="paren">(a) (b)</button>
+                <button type="button" data-value="ABC">A B C</button>
+                <button type="button" data-value="dot">a. b.</button>
+              </div>
+            </div>
+            <div class="row row--stack">
+              <span class="row__label">位置</span>
+              <div class="segmented segmented--compact" data-compose="label_position"
+                   role="radiogroup" aria-label="标记位置">
+                <button type="button" data-value="outside">面板外左上</button>
+                <button type="button" data-value="inside">面板内左上</button>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">标记字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="label_font_size"
+                       min="6" max="48" step="1" aria-label="标记字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">标记加粗</span>
+              <button type="button" class="switch" data-compose="label_bold"
+                      role="switch" aria-label="标记加粗"></button>
+            </div>
+            <div class="row row--stack">
+              <span class="row__label">整图标题</span>
+              <input type="text" class="textfield" data-compose="suptitle"
+                     placeholder="可留空">
+            </div>
+            <div class="row">
+              <span class="row__label">标题字号</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="suptitle_font_size"
+                       min="8" max="40" step="1" aria-label="整图标题字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">面板标题</span>
+              <button type="button" class="switch" data-compose="show_panel_titles"
+                      role="switch" aria-label="面板标题"></button>
+            </div>
+            <p class="row__hint">面板标题默认取数据集名；在下面的「面板」里可以逐格改名。</p>
+          </div>
+        </section>
+
+        <!-- Unified typography -->
+        <section class="group" data-open="true" data-mode="compose">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">字体统一</span>
+          </button>
+          <div class="group__body">
+            <div class="row row--stack">
+              <span class="row__label">字体族</span>
+              <select class="popup" id="composeFontFamily" aria-label="字体族"></select>
+            </div>
+            <div class="row">
+              <span class="row__label">统一字号</span>
+              <button type="button" class="switch" data-compose="unify_font_sizes"
+                      role="switch" aria-label="统一字号"></button>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">标题</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="title_font_size"
+                       min="6" max="32" step="1" aria-label="面板标题字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">轴标签</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="axis_label_font_size"
+                       min="6" max="28" step="1" aria-label="轴标签字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">刻度</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="tick_label_size"
+                       min="5" max="24" step="1" aria-label="刻度字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">图例</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="legend_font_size"
+                       min="5" max="24" step="1" aria-label="图例字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">数据标签</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="data_label_font_size"
+                       min="5" max="24" step="1" aria-label="数据标签字号">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="unify_font_sizes">
+              <span class="row__label">刻度加粗</span>
+              <button type="button" class="switch" data-compose="tick_label_bold"
+                      role="switch" aria-label="刻度加粗"></button>
+            </div>
+            <p class="row__hint">统一字号会覆盖每一格自己的字号；关掉后各格沿用右侧单图设置。</p>
+          </div>
+        </section>
+
+        <!-- Panels -->
+        <section class="group" data-open="true" data-mode="compose">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">面板</span>
+            <span class="badge" id="panelCount">0</span>
+          </button>
+          <div class="group__body">
+            <p class="row__hint">默认一个数据集一格；点「系列」可把多条数据合进同一格，跨行/跨列可把某格放大。</p>
+            <button type="button" class="button button--wide" id="autoPanelsButton">
+              按数据集自动分格
+            </button>
+            <div class="panel-cards" id="panelCards"></div>
+          </div>
+        </section>
+
+        <!-- Composition export -->
+        <section class="group" data-open="true" data-mode="compose">
+          <button type="button" class="group__header">
+            <span class="disclosure" aria-hidden="true"></span>
+            <span class="group__title">导出</span>
+          </button>
+          <div class="group__body">
+            <div class="row">
+              <span class="row__label">按网格定尺寸</span>
+              <button type="button" class="switch" data-compose="auto_size"
+                      role="switch" aria-label="按网格定尺寸"></button>
+            </div>
+            <div class="row" data-when-compose="auto_size">
+              <span class="row__label">每格宽 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="panel_width"
+                       min="1.5" max="6" step="0.1" aria-label="每格宽度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="auto_size">
+              <span class="row__label">每格高 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="panel_height"
+                       min="1.2" max="5" step="0.1" aria-label="每格高度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="!auto_size">
+              <span class="row__label">画布宽 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="fig_width"
+                       min="2" max="30" step="0.5" aria-label="画布宽度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row" data-when-compose="!auto_size">
+              <span class="row__label">画布高 (in)</span>
+              <div class="slider-wrap">
+                <input type="range" class="slider" data-compose="fig_height"
+                       min="2" max="30" step="0.5" aria-label="画布高度">
+                <output class="slider__value"></output>
+              </div>
+            </div>
+            <div class="row">
+              <span class="row__label">DPI</span>
+              <input type="number" class="stepper" data-compose="export_dpi"
+                     min="72" max="1200" step="10" aria-label="DPI">
+            </div>
+            <div class="row">
+              <span class="row__label">自动裁剪留白</span>
+              <button type="button" class="switch" data-compose="export_tight_bbox"
+                      role="switch" aria-label="自动裁剪留白"></button>
+            </div>
+            <p class="row__hint">整图标题与 a/b/c 标记会算进裁剪范围。</p>
+          </div>
+        </section>
+
+        <footer class="inspector__footer">
+          <button type="button" class="button button--wide" id="resetSettingsButton">
+            恢复默认设置
+          </button>
+        </footer>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ── Status bar ────────────────────────────────────────────────────── -->
+  <footer class="statusbar">
+    <div class="statusbar__left">
+      <span class="status-dot" id="engineDot" data-state="pending"></span>
+      <span id="statusMessage">正在启动绘图引擎…</span>
+    </div>
+    <div class="statusbar__right">
+      <span id="statusSize">—</span>
+    </div>
+  </footer>
+
+  <!-- ── Overlays ──────────────────────────────────────────────────────── -->
+  <div class="overlay-layer" id="overlayLayer" hidden></div>
+  <div class="toast-layer" id="toastLayer" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

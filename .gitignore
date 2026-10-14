@@ -1,0 +1,13 @@
+.conda-env/
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Node / Electron
+node_modules/
+electron/.smoke/
+*.log

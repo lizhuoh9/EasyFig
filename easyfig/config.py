@@ -1,6 +1,17 @@
 """
-Configuration constants for Thrust Analysis Tool
+Configuration constants for EasyFig
 """
+from .palettes import (  # noqa: F401  (re-exported for callers of config)
+    PALETTE_ORDER,
+    SCIENTIFIC_PALETTES,
+    describe_palette,
+    palette_color_items,
+    palette_colors,
+    palette_label,
+    palette_names,
+    palette_series_label,
+)
+
 WINDOW_TITLE = "EasyFig"
 WINDOW_GEOMETRY = "1200x800"
 
@@ -20,7 +31,9 @@ DEFAULT_DPI = 100
 # Constants
 DEFAULT_POINT_ALPHA = 0.25
 
-AVAILABLE_COLORS = {
+# Quick-pick colours.  These come first so that automatic series colouring keeps
+# assigning the familiar matplotlib-like colours to the first datasets.
+BASE_COLORS = {
     'Blue': '#1f77b4',
     'Orange': '#ff7f0e',
     'Green': '#2ca02c',
@@ -36,8 +49,15 @@ AVAILABLE_COLORS = {
     'Bright Blue': 'blue',
     'Bright Green': 'green',
     'Bright Orange': 'orange',
-    'Bright Purple': 'purple'
+    'Bright Purple': 'purple',
 }
+
+# Every colour of the ten built-in scientific palettes, named "P42 Nature 1" and
+# so on.  Appended after BASE_COLORS so they are directly selectable everywhere
+# a named colour is offered, without changing the first assignments.
+PALETTE_COLORS = dict(palette_color_items())
+
+AVAILABLE_COLORS = {**BASE_COLORS, **PALETTE_COLORS}
 
 AVAILABLE_MARKERS = [
     'o', 's', '^', 'D', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'd', '|', '_'

@@ -1,0 +1,19 @@
+{
+  "name": "easyfig",
+  "productName": "EasyFig",
+  "version": "1.3.0",
+  "private": true,
+  "description": "EasyFig desktop app - an Electron front end for the Python chart engine.",
+  "main": "electron/main.js",
+  "author": "EasyFig",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "shot": "electron . --smoke --shot electron/.smoke/shot.png",
+    "lint:js": "node --check electron/main.js && node --check electron/preload.js && node --check electron/renderer/app.js"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0"
+  }
+}

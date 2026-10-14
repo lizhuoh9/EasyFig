@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "easyfig"
+version = "1.3.0"
+description = "Turn measurement tables into publication-ready charts, from a GUI or the command line."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["plotting", "matplotlib", "scientific-figures", "color-palettes", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: X11 Applications",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "numpy>=1.24",
+    "matplotlib>=3.6",
+    "pandas>=1.5",
+    "openpyxl>=3.0",
+]
+
+[project.optional-dependencies]
+# Only the export-size test needs an image reader.
+test = ["pillow>=9.0"]
+
+[project.scripts]
+# `easyfig plot ...`, `easyfig spec ...`, `easyfig options`, `easyfig palettes`
+easyfig = "easyfig.cli:main"
+
+[project.gui-scripts]
+# Windowed launcher for the Tk interface (no console window on Windows).
+easyfig-gui = "easyfig.gui:main"
+
+[tool.setuptools]
+packages = ["easyfig"]
