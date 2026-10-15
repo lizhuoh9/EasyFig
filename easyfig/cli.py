@@ -9,32 +9,35 @@ Examples
 --------
 Render a table with one dataset per column:
 
-    python cli.py plot --table results.csv --chart-type bar -o bar.png
+    python -m easyfig plot --table results.csv --chart-type bar -o bar.png
 
 Multi-line import (one file per series, merged into one dataset):
 
-    python cli.py plot --multiline a.xlsx b.xlsx --merge -o merged.png \\
+    python -m easyfig plot --multiline a.xlsx b.xlsx --merge -o merged.png \\
         --title "Thrust" --xlabel "Size" --x-unit in --y-unit kg
 
 Full control from a JSON spec, machine readable result on stdout:
 
-    python cli.py spec spec.json --json-out
+    python -m easyfig spec spec.json --json-out
 
 Compose several charts into one multi-panel figure (a/b/c markers, one font):
 
-    python cli.py compose --spec figure.json -o figure.png
-    python cli.py compose --table results.csv --layout big-left-2 \\
+    python -m easyfig compose --spec figure.json -o figure.png
+    python -m easyfig compose --table results.csv --layout big-left-2 \\
         --panels "1;2,3;4,5,6,7" -o figure.png
-    python cli.py compose --table results.csv --layout big-top-3 --print-layout
-    python cli.py layouts                 # every preset, drawn as ASCII
+    python -m easyfig compose --table results.csv --layout big-top-3 --print-layout
+    python -m easyfig layouts             # every preset, drawn as ASCII
 
 Read a spec from a pipe:
 
-    cat spec.json | python cli.py spec - -o out.svg
+    cat spec.json | python -m easyfig spec - -o out.svg
 
 List every supported setting and its default:
 
-    python cli.py options
+    python -m easyfig options
+
+Once installed, the ``easyfig`` console script is shorter and does the same
+thing, so the examples read ``easyfig plot ...`` in the documentation.
 
 Exit codes: 0 success, 1 processing error, 2 usage error.
 """

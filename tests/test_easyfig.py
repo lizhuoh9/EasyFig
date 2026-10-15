@@ -39,7 +39,6 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 import easyfig  # noqa: E402
-import main as main_module  # noqa: E402
 from easyfig import chart_builder, data_processor, palettes  # noqa: E402
 from easyfig import cli as cli_module  # noqa: E402
 from easyfig import compose as compose_engine  # noqa: E402
@@ -1511,27 +1510,24 @@ class TestCli(TempDirMixin, unittest.TestCase):
 
 
 class TestMainDispatcher(TempDirMixin, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        import main
-
-        self.main = main
+    """The launcher is `python -m easyfig`; see TestPackaging for the wiring."""
 
     def test_cli_subcommand_is_forwarded(self):
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            code = self.main.main(["options", "--json"])
-        self.assertEqual(code, 0)
-        self.assertIn("chart_type", stdout.getvalue())
+        result = subprocess.run(
+            [sys.executable, "-m", "easyfig", "options", "--json"],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("chart_type", result.stdout)
 
     def test_plot_is_forwarded(self):
         path = self.path("t.csv")
         pd.DataFrame({"Size": [1, 2], "A": [1.0, 2.0]}).to_csv(path, index=False)
         out = self.path("o.png")
-        with contextlib.redirect_stdout(io.StringIO()):
-            code = self.main.main(["plot", "--table", path, "--time-column", "Size",
-                                   "-o", out])
-        self.assertEqual(code, 0)
+        result = subprocess.run(
+            [sys.executable, "-m", "easyfig", "plot", "--table", path,
+             "--time-column", "Size", "-o", out],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(os.path.exists(out))
 
 
@@ -2667,19 +2663,19 @@ class TestPackaging(unittest.TestCase):
                 runpy.run_module("easyfig", run_name="__main__", alter_sys=True)
         self.assertEqual(ctx.exception.code, 2)
 
-    def test_root_launchers_still_work(self):
-        """`python main.py <subcommand>` must forward to the CLI."""
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            code = main_module.main(["palettes", "--json"])
-        self.assertEqual(code, 0)
-        self.assertEqual(len(json.loads(stdout.getvalue())), 10)
+    def test_module_entry_point_serves_subcommands(self):
+        """`python -m easyfig <subcommand>` is the launcher for a checkout."""
+        result = subprocess.run(
+            [sys.executable, "-m", "easyfig", "palettes", "--json"],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(json.loads(result.stdout)), 10)
 
-    def test_dispatcher_only_forwards_real_subcommands(self):
-        from easyfig.cli import build_parser
-
-        parser = build_parser()
-        for command in main_module.CLI_SUBCOMMANDS:
+    def test_every_advertised_subcommand_parses(self):
+        """Every subcommand named in the help must actually be accepted."""
+        parser = cli_module.build_parser()
+        for command in ("plot", "spec", "compose", "layouts", "options",
+                        "palettes", "bridge", "gui"):
             extra = ["-"] if command == "spec" else []
             with self.subTest(command=command):
                 args = parser.parse_args([command] + extra)

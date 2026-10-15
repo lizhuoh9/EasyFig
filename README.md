@@ -380,11 +380,19 @@ docs/                   screenshots used by this README
 examples/               runnable walkthrough: data generator + commands
   make_demo_data.py     writes examples/output/data/*.csv
   output/               generated data and figures (ignored by git)
-main.py                 `python main.py` dispatcher (GUI or CLI)
-cli.py                  `python cli.py` launcher for an uninstalled checkout
 pyproject.toml          Python packaging and the console scripts
 package.json            Electron manifest (main + scripts + electron dep)
 ```
+
+There is one way to do each thing, so nothing is duplicated:
+
+| Task | Command |
+| --- | --- |
+| Render a chart from a checkout | `python -m easyfig plot ...` |
+| Render a chart once installed | `easyfig plot ...` |
+| Open the Tk interface | `easyfig gui`, `easyfig-gui`, or `python -m easyfig gui` |
+| Open the desktop app | `npm start` |
+| Serve the JSON protocol | `python -m easyfig.bridge` |
 
 Generated files are never committed: `node_modules/`, `.conda-env/`,
 `electron/.smoke/` and `examples/output/` are all ignored, so the repository holds

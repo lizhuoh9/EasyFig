@@ -3,7 +3,7 @@ Windowed launcher for the EasyFig graphical interface.
 
 Installed as the ``easyfig-gui`` command by :pep:`621` ``gui-scripts``, so it
 starts without a console window on Windows.  ``easyfig gui`` and
-``python main.py`` do the same thing and keep the console attached.
+``python -m easyfig gui`` do the same thing and keep the console attached.
 """
 
 from __future__ import annotations
